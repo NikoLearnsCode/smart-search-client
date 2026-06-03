@@ -1,6 +1,7 @@
 import {SearchModal} from '@/components/search/SearchModal';
 import {SearchOpenTrigger} from '@/components/search/SearchOpenTrigger';
 import {SearchProvider} from '@/components/search/SearchProvider';
+import {Analytics} from '@vercel/analytics/react';
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
         <SearchOpenTrigger className='mb-8' />
         <SearchModal />
       </div>
+      <Analytics />
     </SearchProvider>
   );
 }
