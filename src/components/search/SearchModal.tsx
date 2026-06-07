@@ -14,15 +14,12 @@ import {
 import type {SearchResult} from '@/types/document';
 import {useListKeyboardNav} from '@/hooks/useListKeyboardNav';
 import {useSearchPointerHover} from '@/hooks/useSearchPointerHover';
+import {useSearchStatusAnnouncer} from '@/hooks/useSearchStatusAnnouncer';
 import {useScrollLock} from '@/hooks/useScrollLock';
 import {useSearchActions, useSearchState} from './SearchContext';
 import {SearchModalHeader} from './SearchModalHeader';
 import {SearchBody} from './SearchBody';
 import {SearchFooter} from './SearchFooter';
-
-const STATUS_DEBOUNCE_MS = 700;
-const RESULT_COUNT_DEBOUNCE_MS = 900;
-const INPUT_IDLE_MS = 1200; // wait after last keystroke before status speaks
 
 type SearchModalProps = {
   onResultSelect?: (doc: SearchResult) => void;
@@ -31,11 +28,7 @@ type SearchModalProps = {
 export function SearchModal({onResultSelect}: SearchModalProps = {}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const statusLiveRef = useRef<HTMLDivElement>(null);
   const optionLiveRef = useRef<HTMLDivElement>(null);
-  const announcedStatusRef = useRef('');
-  const lastSearchKeyAtRef = useRef(0);
-  const statusClearTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [open, setOpen] = useState(false);
   const [linkFieldHints, setLinkFieldHints] = useState(true);
 
@@ -46,6 +39,13 @@ export function SearchModal({onResultSelect}: SearchModalProps = {}) {
 
   const {setQuery} = useSearchActions();
   const {hoverAllowed, lockHover} = useSearchPointerHover(resetKey);
+  const {statusLiveRef, markActivity} = useSearchStatusAnnouncer({
+    open,
+    query,
+    deferredQuery,
+    loading,
+    resultCount: results.length,
+  });
 
   useScrollLock(open);
 
@@ -69,7 +69,6 @@ export function SearchModal({onResultSelect}: SearchModalProps = {}) {
     const handleClose = () => {
       setOpen(false);
       setQuery('');
-      announcedStatusRef.current = '';
       setLinkFieldHints(true);
     };
 
@@ -97,69 +96,9 @@ export function SearchModal({onResultSelect}: SearchModalProps = {}) {
   }, []);
 
   const markSearchInputActivity = useCallback(() => {
-    lastSearchKeyAtRef.current = Date.now();
+    markActivity();
     setLinkFieldHints(false);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    if (trimmedImmediate !== trimmedDeferred) return;
-
-    const debounceMs =
-      trimmedDeferred.length > 0 && results.length > 0
-        ? RESULT_COUNT_DEBOUNCE_MS
-        : STATUS_DEBOUNCE_MS;
-
-    let timer: ReturnType<typeof setTimeout>;
-
-    const publish = () => {
-      const idle = Date.now() - lastSearchKeyAtRef.current;
-      if (idle < INPUT_IDLE_MS) {
-        timer = window.setTimeout(publish, INPUT_IDLE_MS - idle);
-        return;
-      }
-
-      const el = statusLiveRef.current;
-      if (!el) return;
-
-      const imm = query.trim();
-      const def = deferredQuery.trim();
-      if (imm !== def) return;
-
-      const msg = getSearchStatusMessage(def, imm, loading, results.length);
-      if (!msg) return;
-      if (msg === announcedStatusRef.current) return;
-      announcedStatusRef.current = msg;
-      el.setAttribute('aria-live', 'polite');
-      el.textContent = msg;
-
-      // Drop text after speak so arrow-up back to the field doesn't re-read it.
-      if (results.length > 0) {
-        if (statusClearTimerRef.current)
-          clearTimeout(statusClearTimerRef.current);
-        statusClearTimerRef.current = window.setTimeout(() => {
-          if (el.textContent !== msg) return;
-          el.setAttribute('aria-live', 'off');
-          el.textContent = '';
-        }, 500);
-      }
-    };
-
-    timer = window.setTimeout(publish, debounceMs);
-    return () => {
-      window.clearTimeout(timer);
-      if (statusClearTimerRef.current)
-        clearTimeout(statusClearTimerRef.current);
-    };
-  }, [
-    open,
-    trimmedDeferred,
-    trimmedImmediate,
-    loading,
-    results.length,
-    query,
-    deferredQuery,
-  ]);
+  }, [markActivity]);
 
   const querySettled = trimmedImmediate === trimmedDeferred;
 
