@@ -24,7 +24,6 @@
 
 @layer base {
   :root {
-    /* Variant 1 */
     --bg-color-secondary: #242424;
     --bg-color: #1a1a1a;
     --bg-input: #2f2f2f;
@@ -35,18 +34,6 @@
     --glow-color: rgba(66, 184, 131, 0.25);
     --search-overlay-bg: color-mix(in srgb, var(--bg-color) 20%, transparent);
   }
-  /* Variant 2 */
-  /* --bg-color-secondary:  #23272f;
-    --bg-color: #23272f;
-    --bg-input: #343A46;
-    --text-color: #F6F7F9;
-    --text-foreground-solid: #FFFFFF;
-    --text-muted: #99A1B3;
-    --primary-color: #58C4DC;
-
-    --glow-color: rgba(88, 196, 220, 0.25);
-    --search-overlay-bg: rgb(52 58 70 / 0.5);
-  } */
 
   html,
   body {
@@ -55,10 +42,6 @@
 
   mark {
     color: var(--primary-color);
-    /* font-weight: 700; */
-    border-radius: 3px;
-    padding: 2px 2px 0;
-    margin: 0 -2px;
     background-color: transparent;
     text-decoration: none;
   }
@@ -93,7 +76,8 @@ dialog.search-modal {
   justify-content: center;
   align-items: stretch;
   opacity: 0;
- /*  transition:
+  /* Uncomment to use animation for the modal */
+  /*  transition:
     display 0.22s allow-discrete,
     overlay 0.22s allow-discrete,
     opacity 0.22s ease; */
@@ -123,6 +107,7 @@ dialog.search-modal[open] {
   }
 }
 
+/* Uncomment to use animation for the modal */
 dialog.search-modal::backdrop {
   background-color: var(--search-overlay-bg);
   /* opacity: 0;
