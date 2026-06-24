@@ -15,6 +15,7 @@ import type {SearchResult} from '@/types/document';
 import {useListKeyboardNav} from '@/hooks/useListKeyboardNav';
 import {useSearchPointerHover} from '@/hooks/useSearchPointerHover';
 import {useSearchStatusAnnouncer} from '@/hooks/useSearchStatusAnnouncer';
+import {useDismissKeyboardOnScroll} from '@/hooks/useDismissKeyboardOnScroll';
 import {useScrollLock} from '@/hooks/useScrollLock';
 import {useSearchActions, useSearchState} from './SearchContext';
 import {SearchModalHeader} from './SearchModalHeader';
@@ -48,6 +49,7 @@ export function SearchModal({onResultSelect}: SearchModalProps = {}) {
   });
 
   useScrollLock(open);
+  useDismissKeyboardOnScroll(dialogRef, open);
 
   const statusMessage = getSearchStatusMessage(
     trimmedDeferred,

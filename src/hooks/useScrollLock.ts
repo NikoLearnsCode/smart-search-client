@@ -1,84 +1,16 @@
 import {useEffect} from 'react';
 
-function deviceHasCoarsePointer(): boolean {
-  if (typeof window === 'undefined') return false;
-
-  try {
-    if (window.matchMedia('(any-pointer: coarse)').matches) return true;
-    if (window.matchMedia('(pointer: coarse)').matches) return true;
-  } catch {
-    /* matchMedia can throw in rare embedding contexts */
-  }
-
-  return typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
-}
-
 let originalBodyStyles: {
+  position: string;
+  top: string;
+  width: string;
   overflow: string;
   paddingRight: string;
 } | null = null;
 
-// Prevents scroll interception when the active touch target is located inside a vertically scrollable container.
-function touchTargetCanScrollVertically(target: EventTarget | null): boolean {
-  let el: Element | null =
-    target instanceof Element
-      ? target
-      : target instanceof Node
-        ? target.parentElement
-        : null;
-  const root = document.documentElement;
+let scrollY = 0;
 
-  while (el && el !== root) {
-    const style = window.getComputedStyle(el);
-    const overflowY = style.overflowY;
-    const scrollable =
-      overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
-
-    if (scrollable && el.scrollHeight > el.clientHeight) {
-      return true;
-    }
-    el = el.parentElement;
-  }
-  return false;
-}
-
-let touchMoveHandler: ((e: TouchEvent) => void) | null = null;
-let savedHtmlOverscroll = '';
-
-// Mobile scroll lock strategy
-// Standard CSS body overflow: hidded fails on mobile devices during input focus inside full-height modals.
-// The appearance of the virtual keyboard triggers a viewport resize, causing the browser to drop the CSS scroll lock.
-// This approach actively intercepts non-passive touchmove events to prevent scrolling instead.
-function lockTouchScrollLayer() {
-  if (typeof window === 'undefined') return;
-  if (touchMoveHandler) return;
-
-  touchMoveHandler = (e: TouchEvent) => {
-    if (touchTargetCanScrollVertically(e.target)) return;
-    e.preventDefault();
-  };
-
-  document.addEventListener('touchmove', touchMoveHandler, {
-    capture: true,
-    passive: false,
-  });
-
-  const html = document.documentElement;
-  savedHtmlOverscroll = html.style.overscrollBehavior;
-  html.style.overscrollBehavior = 'none';
-}
-
-function unlockTouchScrollLayer() {
-  if (!touchMoveHandler) return;
-
-  document.removeEventListener('touchmove', touchMoveHandler, {capture: true});
-  const html = document.documentElement;
-  html.style.overscrollBehavior = savedHtmlOverscroll;
-  savedHtmlOverscroll = '';
-  touchMoveHandler = null;
-}
-
-// Standard desktop scroll lock
+// Freeze the page behind the full-screen mobile chat.
 function lockBodyScroll() {
   const body = document.body;
   const html = document.documentElement;
@@ -87,11 +19,19 @@ function lockBodyScroll() {
     Number.parseFloat(computedStyle.paddingRight) || 0;
   const scrollbarWidth = window.innerWidth - html.clientWidth;
 
+  scrollY = window.scrollY;
+
   originalBodyStyles = {
+    position: body.style.position,
+    top: body.style.top,
+    width: body.style.width,
     overflow: body.style.overflow,
     paddingRight: body.style.paddingRight,
   };
 
+  body.style.position = 'fixed';
+  body.style.top = `-${scrollY}px`;
+  body.style.width = '100%';
   body.style.overflow = 'hidden';
 
   if (scrollbarWidth > 0) {
@@ -103,9 +43,13 @@ function unlockBodyScroll() {
   if (!originalBodyStyles) return;
 
   const body = document.body;
+  body.style.position = originalBodyStyles.position;
+  body.style.top = originalBodyStyles.top;
+  body.style.width = originalBodyStyles.width;
   body.style.overflow = originalBodyStyles.overflow;
   body.style.paddingRight = originalBodyStyles.paddingRight;
 
+  window.scrollTo(0, scrollY);
   originalBodyStyles = null;
 }
 
@@ -113,20 +57,10 @@ export function useScrollLock(isLocked: boolean): void {
   useEffect(() => {
     if (!isLocked) return;
 
-    const isTouchDevice = deviceHasCoarsePointer();
-
-    if (isTouchDevice) {
-      lockTouchScrollLayer();
-    } else {
-      lockBodyScroll();
-    }
+    lockBodyScroll();
 
     return () => {
-      if (isTouchDevice) {
-        unlockTouchScrollLayer();
-      } else {
-        unlockBodyScroll();
-      }
+      unlockBodyScroll();
     };
   }, [isLocked]);
 }
