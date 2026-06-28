@@ -1,4 +1,4 @@
-# Client Fuzzy Search
+# Client-side Fuzzy Search
 
 A command-palette–style smart search that runs **entirely in the browser** - no search API, no backend. Documents are loaded as static JSON, indexed and scored in JavaScript, and results follow the input live via React `useDeferredValue` (no debounce timer). Highlighted matches, full keyboard navigation, and screen-reader support.
 
