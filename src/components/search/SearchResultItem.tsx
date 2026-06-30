@@ -1,3 +1,4 @@
+import {memo} from 'react';
 import type {MatchReason, SearchResult} from '@/types/document';
 import {MATCH_REASON_LABEL, SEARCH_DEBUG_UI} from '@/lib/searchEngine';
 import {searchOptionLabel} from './searchA11y';
@@ -89,7 +90,7 @@ function DebugBadges({
   );
 }
 
-export function SearchResultItem({
+export const SearchResultItem = memo(function SearchResultItem({
   id,
   doc,
   index,
@@ -153,4 +154,4 @@ export function SearchResultItem({
       </div>
     </li>
   );
-}
+});

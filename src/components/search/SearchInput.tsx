@@ -1,46 +1,69 @@
-import type {ComponentPropsWithoutRef, Ref} from 'react';
+import {memo, useCallback} from 'react';
+import type {ChangeEvent, KeyboardEvent} from 'react';
 import SearchIcon from '@/icons/SearchIcon';
 import {XIcon} from '@/icons/XIcon';
+import {useSearchState} from './SearchContext';
+import {SEARCH_HINTS_ID} from './searchA11y';
 
-type SearchInputProps = Omit<
-  ComponentPropsWithoutRef<'input'>,
-  'type' | 'value'
-> & {
-  value: string;
-  ref?: Ref<HTMLInputElement>;
-  onClear?: () => void;
+type SearchInputProps = {
+  linkFieldHints: boolean;
+  ariaExpanded: boolean;
+  ariaControls?: string;
+//  Resets the idle timer so live status doesn't interrupt typing.
+  onSearchInputActivity?: () => void;
 };
 
-export function SearchInput({
-  ref,
-  className = '',
-  onClear,
-  value,
-  ...props
+export const SearchInput = memo(function SearchInput({
+  linkFieldHints,
+  ariaExpanded,
+  ariaControls,
+  onSearchInputActivity,
 }: SearchInputProps) {
-  const showClear = Boolean(onClear && value.length > 0);
+  const {inputRef, query, setQuery} = useSearchState();
+  const showClear = query.length > 0;
 
-  const handleClear = () => {
-    onClear?.();
-    if (ref && typeof ref === 'object' && ref.current) {
-      ref.current.focus();
-    }
-  };
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setQuery(e.target.value);
+      onSearchInputActivity?.();
+    },
+    [setQuery, onSearchInputActivity],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') return;
+      onSearchInputActivity?.();
+    },
+    [onSearchInputActivity],
+  );
+
+  const handleClear = useCallback(() => {
+    setQuery('');
+    inputRef.current?.focus();
+  }, [setQuery, inputRef]);
 
   return (
     <div className='relative'>
       <SearchIcon height={20} width={20} />
       <input
-        ref={ref}
+        ref={inputRef}
         type='text'
         inputMode='search'
         autoComplete='off'
         spellCheck={false}
-        value={value}
+        value={query}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        placeholder='Search movies'
+        role='searchbox'
+        aria-label='Search movies'
+        aria-describedby={linkFieldHints ? SEARCH_HINTS_ID : undefined}
+        aria-expanded={ariaExpanded}
+        aria-controls={ariaControls}
         className={`w-full rounded-xs border border-primary bg-input h-12 pl-10.5 text-[18px] text-foreground placeholder:text-base placeholder:text-muted outline-none shadow-sm shadow-glow  ${
           showClear ? 'pr-11' : 'pr-8'
-        } ${className}`}
-        {...props}
+        }`}
       />
       {showClear && (
         <div className='absolute inset-y-0 right-0 flex items-center'>
@@ -57,4 +80,4 @@ export function SearchInput({
       )}
     </div>
   );
-}
+});

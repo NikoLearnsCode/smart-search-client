@@ -3,8 +3,9 @@ import {EnterIcon} from '@/icons/EnterIcon';
 import {ArrowUpIcon} from '@/icons/ArrowUpIcon';
 import {ArrowDownIcon} from '@/icons/ArrowDownIcon';
 import {EscIcon} from '@/icons/EscIcon';
+import {memo} from 'react';
 
-export function SearchFooter() {
+export const SearchFooter = memo(function SearchFooter() {
   return (
     <footer
       aria-hidden='true'
@@ -37,4 +38,4 @@ export function SearchFooter() {
       </div>
     </footer>
   );
-}
+});

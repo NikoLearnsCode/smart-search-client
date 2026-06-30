@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {
   getSearchStatusMessage,
   needsOptionLiveAnnouncement,
@@ -17,7 +17,7 @@ import {useSearchPointerHover} from '@/hooks/useSearchPointerHover';
 import {useSearchStatusAnnouncer} from '@/hooks/useSearchStatusAnnouncer';
 import {useDismissKeyboardOnScroll} from '@/hooks/useDismissKeyboardOnScroll';
 import {useScrollLock} from '@/hooks/useScrollLock';
-import {useSearchActions, useSearchState} from './SearchContext';
+import {useSearchState} from './SearchContext';
 import {SearchModalHeader} from './SearchModalHeader';
 import {SearchBody} from './SearchBody';
 import {SearchFooter} from './SearchFooter';
@@ -33,12 +33,10 @@ export function SearchModal({onResultSelect}: SearchModalProps = {}) {
   const [open, setOpen] = useState(false);
   const [linkFieldHints, setLinkFieldHints] = useState(true);
 
-  const {inputRef, results, resetKey, loading, query, deferredQuery} =
+  const {inputRef, results, resetKey, loading, query, deferredQuery, setQuery} =
     useSearchState();
   const trimmedDeferred = deferredQuery.trim();
   const trimmedImmediate = query.trim();
-
-  const {setQuery} = useSearchActions();
   const {hoverAllowed, lockHover} = useSearchPointerHover(resetKey);
   const {statusLiveRef, markActivity} = useSearchStatusAnnouncer({
     open,
@@ -158,10 +156,21 @@ export function SearchModal({onResultSelect}: SearchModalProps = {}) {
     : statusVisible
       ? SEARCH_STATUS_ID
       : undefined;
-  const activeDescendantId =
-    !optionLiveRegion && listboxVisible && selectedIndex >= 0
-      ? searchOptionId(selectedIndex)
-      : undefined;
+
+  // Keep activedescendant off React props so header/input skip re-render on arrow keys.
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    if (!optionLiveRegion && listboxVisible && selectedIndex >= 0) {
+      input.setAttribute(
+        'aria-activedescendant',
+        searchOptionId(selectedIndex),
+      );
+    } else {
+      input.removeAttribute('aria-activedescendant');
+    }
+  }, [inputRef, optionLiveRegion, listboxVisible, selectedIndex]);
 
   useEffect(() => {
     if (!open) return;
@@ -201,7 +210,6 @@ export function SearchModal({onResultSelect}: SearchModalProps = {}) {
           linkFieldHints={linkFieldHints}
           ariaExpanded={ariaExpanded}
           ariaControls={ariaControls}
-          activeDescendantId={activeDescendantId}
           onSearchInputActivity={markSearchInputActivity}
         />
         <div

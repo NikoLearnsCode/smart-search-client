@@ -2,8 +2,8 @@ import {useDeferredValue, useEffect, useMemo, useRef, useState} from 'react';
 import type {ReactNode} from 'react';
 import type {SearchResult} from '@/types/document';
 import {filterPages, loadPages} from '@/lib/searchData';
-import {SearchActionsContext, SearchStateContext} from './SearchContext';
-import type {SearchActionsValue, SearchStateValue} from './SearchContext';
+import {SearchStateContext} from './SearchContext';
+import type {SearchStateValue} from './SearchContext';
 
 type SearchProviderProps = {
   children: ReactNode;
@@ -40,20 +40,17 @@ export function SearchProvider({children}: SearchProviderProps) {
       query,
       deferredQuery,
       results,
+      setQuery,
       loading,
       hasQuery,
       resetKey: deferredQuery,
     }),
-    [query, results, loading, hasQuery, deferredQuery],
+    [query, deferredQuery, results, loading, hasQuery],
   );
 
-  const actionsValue = useMemo<SearchActionsValue>(() => ({setQuery}), []);
-
   return (
-    <SearchActionsContext.Provider value={actionsValue}>
       <SearchStateContext.Provider value={stateValue}>
         {children}
       </SearchStateContext.Provider>
-    </SearchActionsContext.Provider>
   );
 }

@@ -6,8 +6,8 @@ import {Analytics} from '@vercel/analytics/react';
 function App() {
   return (
     <SearchProvider>
-      <div className='min-h-screen px-2.75 md:px-5 py-3.25 md:py-6'>
-        <SearchOpenTrigger className='mb-8' />
+      <div className='min-h-screen h-[3000px] px-2.75 md:px-5 py-3.25 md:py-6'>
+        <SearchOpenTrigger />
         <SearchModal />
       </div>
       <Analytics />

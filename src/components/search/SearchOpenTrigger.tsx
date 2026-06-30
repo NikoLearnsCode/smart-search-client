@@ -19,7 +19,7 @@ export function SearchOpenTrigger({
       commandfor={SEARCH_DIALOG_ID}
       command='show-modal'
       aria-label='Open search'
-      className={`group relative rounded-xs flex h-11 w-11 shrink-0 items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 p-5 ml-[3px] mt-px focus-visible:ring-offset-background md:h-auto md:w-fit md:justify-start md:py-2.5 md:pl-4 cursor-pointer md:pr-3 ${className}`}
+      className={`group fixed top-[15.5px] left-[13px] rounded-xs flex h-10 w-10 shrink-0 items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 p-5 ml-[3px] mt-px focus-visible:ring-offset-background md:h-auto md:w-fit md:justify-start md:py-2.5 md:pl-4 cursor-pointer md:pr-3 ${className}`}
     >
       <SearchIcon className='size-5  md:size-4 shrink-0 text-muted transition-colors group-hover:text-foreground md:absolute md:left-5 md:top-1/2  md:-translate-y-1/2' />
       <div className='hidden min-w-0 items-center gap-3 pl-7 md:flex'>
